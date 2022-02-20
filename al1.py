@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-df = pd.read_csv('data/venus.csv')
+df = pd.read_csv('data/earth_10yr_365.csv')
 df['t'] = pd.to_datetime(df['t'])
 
 x = df['jd'].values
