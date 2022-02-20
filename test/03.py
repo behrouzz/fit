@@ -7,6 +7,7 @@ df['t'] = pd.to_datetime(df['t'])
 
 x = df['jd'].values
 y = df['i_cont'].values
+y_orig = df['i_cont'].values
 
 def R2(x, y, func):
     res = y - func(x)
@@ -28,30 +29,29 @@ df_fa = df_fa.sort_values('a', ascending=False)
 
 #======================================
 
+prev_y = np.zeros(len(y))
 
-[0, 2*np.pi*df_fa['f'].iloc[0], 0]
-[0, 2*np.pi*df_fa['f'].iloc[0], 0] + [0, 2*np.pi*df_fa['f'].iloc[1], 0]
-[0, 2*np.pi*df_fa['f'].iloc[0], 0] + [0, 2*np.pi*df_fa['f'].iloc[1], 0] + [0, 2*np.pi*df_fa['f'].iloc[2], 0]
-
-p0 = []
 for i in range(5):
 
-    def init_func(t, *args):
-        A = args[0::3]
-        w = args[1::3]
-        p = args[2::3]
-        return np.array([A[i]*np.sin(w[i]*t+p[i]) for i in range(len(A))]).sum()
+    def init_func(t, A,w,p):
+        return A*np.sin(w*t+p)
 
-    p0 = [*p0, *[0, 2*np.pi*df_fa['f'].iloc[i], 0]]
+    p0=[0, 2*np.pi*df_fa['f'].iloc[i], 0] if i==0 else [0,0,0]
     
     def fit(tt, yy):
-        popt, pcov = curve_fit(init_func, tt, yy, p0=p0)
+        popt, pcov = curve_fit(init_func, tt, yy, maxfev=5000, p0=p0)
         return popt
 
-    popt = fit(x, y)
+    
+
+    popt = fit(x, y-prev_y)
 
     def final_func(t):
         return init_func(t, *popt)
 
-    print('R2 =', R2(x, y, final_func))
+    print('R2 =', R2(x, y-prev_y, final_func))
+    prev_y = prev_y + final_func(x)
     #print(p0)
+    fig, ax = plt.subplots()
+    ax.plot(x,  y-prev_y)
+    plt.show()
